@@ -9,33 +9,82 @@ public static class LayoutRestorePlanner
         IReadOnlyList<WindowSnapshot> currentWindows,
         IReadOnlyList<MonitorSnapshot> currentMonitors)
     {
-        if (profile.Version != LayoutProfile.CurrentVersion || currentMonitors.Count == 0)
+        ArgumentNullException.ThrowIfNull(profile);
+        ArgumentNullException.ThrowIfNull(currentWindows);
+        ArgumentNullException.ThrowIfNull(currentMonitors);
+        if (profile.Version != LayoutProfile.CurrentVersion ||
+            profile.Monitors is null || profile.Windows is null)
             return [];
 
+        var usableCurrentMonitors = currentMonitors
+            .Where(monitor => monitor is not null &&
+                monitor.Bounds.IsValid && monitor.WorkArea.IsValid &&
+                monitor.DpiX > 0 && monitor.DpiY > 0)
+            .ToArray();
+        if (usableCurrentMonitors.Length == 0)
+            return [];
+
+        var usableSavedMonitors = profile.Monitors
+            .Where(monitor => monitor is not null &&
+                monitor.Bounds.IsValid && monitor.WorkArea.IsValid &&
+                monitor.DpiX > 0 && monitor.DpiY > 0)
+            .ToArray();
         var currentByIdentity = currentWindows
-            .GroupBy(w => (w.ApplicationId, w.ClassName))
-            .ToDictionary(g => g.Key, g => g.OrderBy(w => w.Handle).ToArray());
+            .Where(window => window is not null &&
+                window.Handle != 0 &&
+                !string.IsNullOrWhiteSpace(window.ApplicationId) &&
+                !string.IsNullOrWhiteSpace(window.ClassName))
+            .GroupBy(w => IdentityKey(w.ApplicationId, w.ClassName), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                g => g.Key,
+                g => g
+                    .OrderBy(w => w.Title, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(w => w.Handle)
+                    .ToArray(),
+                StringComparer.OrdinalIgnoreCase);
 
         var result = new List<PlannedPlacement>();
+        var plannedHandles = new HashSet<long>();
         foreach (var saved in profile.Windows)
         {
-            if (!currentByIdentity.TryGetValue((saved.ApplicationId, saved.ClassName), out var matches) ||
+            if (saved is null || !saved.Bounds.IsValid)
+                continue;
+
+            if (!currentByIdentity.TryGetValue(IdentityKey(saved.ApplicationId, saved.ClassName), out var matches) ||
                 saved.Ordinal < 0 || saved.Ordinal >= matches.Length)
                 continue;
 
-            var savedMonitor = profile.Monitors.FirstOrDefault(m => m.DeviceName == saved.MonitorDeviceName)
-                ?? profile.Monitors.FirstOrDefault(m => saved.Bounds.Intersect(m.Bounds).Area > 0);
-            var currentMonitor = currentMonitors.FirstOrDefault(m => m.DeviceName == saved.MonitorDeviceName)
-                ?? currentMonitors.FirstOrDefault(m => m.IsPrimary)
-                ?? currentMonitors[0];
+            var match = matches[saved.Ordinal];
+            if (!plannedHandles.Add(match.Handle))
+                continue;
 
-            var bounds = savedMonitor is null
-                ? MonitorGeometry.FitToWorkArea(saved.Bounds, currentMonitor.WorkArea)
-                : MonitorGeometry.MapBetweenMonitors(saved.Bounds, savedMonitor.WorkArea, currentMonitor.WorkArea);
+            var savedMonitor = usableSavedMonitors.FirstOrDefault(m =>
+                    string.Equals(m.DeviceName, saved.MonitorDeviceName, StringComparison.OrdinalIgnoreCase))
+                ?? usableSavedMonitors.FirstOrDefault(m => saved.Bounds.Intersect(m.Bounds).Area > 0);
+            var currentMonitor = usableCurrentMonitors.FirstOrDefault(m =>
+                    string.Equals(m.DeviceName, saved.MonitorDeviceName, StringComparison.OrdinalIgnoreCase))
+                ?? usableCurrentMonitors.FirstOrDefault(m => m.IsPrimary)
+                ?? usableCurrentMonitors[0];
 
-            result.Add(new PlannedPlacement(matches[saved.Ordinal].Handle, bounds, saved.WasMaximized));
+            RectI bounds;
+            try
+            {
+                bounds = savedMonitor is null
+                    ? MonitorGeometry.FitToWorkArea(saved.Bounds, currentMonitor.WorkArea)
+                    : MonitorGeometry.MapBetweenMonitors(
+                        saved.Bounds, savedMonitor, currentMonitor);
+            }
+            catch (OverflowException)
+            {
+                bounds = MonitorGeometry.FitToWorkArea(saved.Bounds, currentMonitor.WorkArea);
+            }
+
+            result.Add(new PlannedPlacement(match.Handle, bounds, saved.WasMaximized));
         }
 
         return result;
     }
+
+    private static string IdentityKey(string applicationId, string className) =>
+        $"{applicationId}\u001f{className}";
 }

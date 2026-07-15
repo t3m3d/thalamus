@@ -8,9 +8,9 @@ public interface IWindowManager
     Task<IReadOnlyList<WindowSnapshot>> GetWindowsAsync(CancellationToken cancellationToken = default);
     IReadOnlyList<MonitorSnapshot> GetMonitors();
     long GetForegroundWindow();
-    void Activate(long handle);
-    void Minimize(long handle);
-    Task CloseAsync(long handle, CancellationToken cancellationToken = default);
+    bool Activate(long handle);
+    bool Minimize(long handle);
+    Task<bool> CloseAsync(long handle, CancellationToken cancellationToken = default);
     bool Tile(long handle, TileTarget target);
     bool MoveToMonitor(long handle, string monitorDeviceName);
     bool ApplyPlacement(long handle, RectI bounds, bool maximizeAfterPlacement);
@@ -18,6 +18,7 @@ public interface IWindowManager
 
 public interface IWindowTracker : IDisposable
 {
+    void RequestRefresh();
     event EventHandler? WindowsChanged;
     void Start();
 }

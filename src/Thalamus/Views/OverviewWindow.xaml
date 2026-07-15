@@ -1,0 +1,283 @@
+<Window x:Class="Thalamus.Views.OverviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Thalamus.ViewModels"
+        Title="Thalamus window overview"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Background="#F012151A"
+        Foreground="{DynamicResource PrimaryTextBrush}"
+        Loaded="Window_Loaded"
+        PreviewKeyDown="Window_KeyDown">
+    <Window.Resources>
+        <SolidColorBrush x:Key="AccentBrush" Color="#FF7DD3FC"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#E6212730"/>
+        <SolidColorBrush x:Key="SurfaceHoverBrush" Color="#F02B3440"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#38FFFFFF"/>
+        <SolidColorBrush x:Key="PrimaryTextBrush" Color="#FFF7FAFC"/>
+        <SolidColorBrush x:Key="SecondaryTextBrush" Color="#C8D7DEE8"/>
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#90D7DEE8"/>
+        <SolidColorBrush x:Key="PreviewBackgroundBrush" Color="#FF11151B"/>
+        <SolidColorBrush x:Key="ToolbarBackgroundBrush" Color="#1CFFFFFF"/>
+        <SolidColorBrush x:Key="ToolbarHoverBrush" Color="#30FFFFFF"/>
+        <SolidColorBrush x:Key="ToolbarHoverTextBrush" Color="#FFF7FAFC"/>
+        <SolidColorBrush x:Key="SelectionHoverBrush" Color="#24FFFFFF"/>
+        <SolidColorBrush x:Key="SelectionBackgroundBrush" Color="#207DD3FC"/>
+        <SolidColorBrush x:Key="IconBackgroundBrush" Color="#24FFFFFF"/>
+        <Style x:Key="ToolbarButton" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource ToolbarBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Chrome"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
+                            <ContentPresenter Margin="{TemplateBinding Padding}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Chrome" Property="Background" Value="{DynamicResource ToolbarHoverBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ToolbarHoverTextBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Chrome" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="Chrome" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Chrome" Property="Opacity" Value="0.72"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="AutomationProperties.Name" Value="{Binding Title}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="SelectionChrome"
+                                Background="Transparent"
+                                BorderBrush="Transparent"
+                                BorderThickness="2"
+                                CornerRadius="18"
+                                Padding="2">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="SelectionChrome" Property="Background" Value="{DynamicResource SelectionHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="SelectionChrome" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="SelectionChrome" Property="Background" Value="{DynamicResource SelectionBackgroundBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="SelectionChrome" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <DataTemplate DataType="{x:Type vm:WindowCardViewModel}">
+            <Border Width="310"
+                    Height="232"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="15"
+                    ClipToBounds="True"
+                    AutomationProperties.Name="{Binding Title}"
+                    PreviewMouseLeftButtonDown="Card_MouseLeftButtonDown"
+                    PreviewMouseMove="Card_MouseMove"
+                    PreviewMouseLeftButtonUp="Card_MouseLeftButtonUp"
+                    LostMouseCapture="Card_LostMouseCapture">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="46"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="42"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="12,8,10,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Width="28" Height="28" CornerRadius="7" Background="{DynamicResource IconBackgroundBrush}">
+                            <Image Source="{Binding Icon}" Width="22" Height="22"
+                                   AutomationProperties.Name="{Binding ApplicationId}"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" Margin="9,0,0,0">
+                            <TextBlock Text="{Binding Title}"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding GroupLabel}"
+                                       Foreground="{DynamicResource SecondaryTextBrush}"
+                                       FontSize="10"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </Grid>
+                    <Border x:Name="PreviewHost"
+                            Grid.Row="1"
+                            Margin="9,0"
+                            Background="{DynamicResource PreviewBackgroundBrush}"
+                            CornerRadius="9"
+                            Loaded="PreviewHost_Loaded"
+                            Unloaded="PreviewHost_Unloaded"
+                            SizeChanged="PreviewHost_SizeChanged"
+                            AutomationProperties.Name="{Binding Title}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="Live preview unavailable"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="11"/>
+                            <TextBlock Text="{Binding MonitorDeviceName}"
+                                       Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="9"
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <Grid Grid.Row="2" Margin="8,3,8,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0"
+                                Style="{StaticResource ToolbarButton}"
+                                Padding="8,4"
+                                Content="Open"
+                                Command="{Binding DataContext.ActivateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                AutomationProperties.Name="Activate window"/>
+                        <Button Grid.Column="1"
+                                Style="{StaticResource ToolbarButton}"
+                                Padding="8,4"
+                                Content="Minimize"
+                                Command="{Binding DataContext.MinimizeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                AutomationProperties.Name="Minimize window"/>
+                        <Button Grid.Column="2"
+                                Style="{StaticResource ToolbarButton}"
+                                Padding="8,4"
+                                Content="Close"
+                                Command="{Binding DataContext.CloseCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                CommandParameter="{Binding}"
+                                AutomationProperties.Name="Close window"/>
+                    </Grid>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid" Margin="34,24,34,22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="4,0,4,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="Thalamus"
+                           FontSize="26"
+                           FontWeight="SemiBold"/>
+                <TextBlock Text="Window overview · drag a card toward another display to move it"
+                           Foreground="{DynamicResource SecondaryTextBrush}"
+                           Margin="1,3,18,0"
+                           TextWrapping="Wrap"/>
+            </StackPanel>
+            <WrapPanel Grid.Column="1" VerticalAlignment="Center">
+                <Button Style="{StaticResource ToolbarButton}" Content="½ Left"
+                        Command="{Binding TileCommand}" CommandParameter="Left"
+                        AutomationProperties.Name="Tile selected window to left half"/>
+                <Button Style="{StaticResource ToolbarButton}" Content="½ Right"
+                        Command="{Binding TileCommand}" CommandParameter="Right"
+                        AutomationProperties.Name="Tile selected window to right half"/>
+                <Button Style="{StaticResource ToolbarButton}" Content="⅓ Left"
+                        Command="{Binding TileCommand}" CommandParameter="LeftThird"
+                        AutomationProperties.Name="Tile selected window to left third"/>
+                <Button Style="{StaticResource ToolbarButton}" Content="⅓ Center"
+                        Command="{Binding TileCommand}" CommandParameter="CenterThird"
+                        AutomationProperties.Name="Tile selected window to center third"/>
+                <Button Style="{StaticResource ToolbarButton}" Content="⅓ Right"
+                        Command="{Binding TileCommand}" CommandParameter="RightThird"
+                        AutomationProperties.Name="Tile selected window to right third"/>
+                <Button Style="{StaticResource ToolbarButton}" Content="¼ ↖"
+                        Command="{Binding TileCommand}" CommandParameter="TopLeft"
+                        AutomationProperties.Name="Tile selected window to top-left quarter"/>
+                <Button Style="{StaticResource ToolbarButton}" Content="&#x00BC; &#x2197;"
+                        AutomationProperties.Name="Tile selected window to top-right quarter"
+                        Command="{Binding TileCommand}" CommandParameter="TopRight"/>
+                <Button Style="{StaticResource ToolbarButton}" Content="&#x00BC; &#x2199;"
+                        AutomationProperties.Name="Tile selected window to bottom-left quarter"
+                        Command="{Binding TileCommand}" CommandParameter="BottomLeft"/>
+                <Button Style="{StaticResource ToolbarButton}" Content="¼ ↘"
+                        Command="{Binding TileCommand}" CommandParameter="BottomRight"
+                        AutomationProperties.Name="Tile selected window to bottom-right quarter"/>
+                <Button Style="{StaticResource ToolbarButton}" Content="Maximize"
+                        Command="{Binding TileCommand}" CommandParameter="Maximize"
+                        AutomationProperties.Name="Maximize selected window"/>
+                <Button Style="{StaticResource ToolbarButton}" Content="Restore"
+                        Command="{Binding TileCommand}" CommandParameter="Restore"
+                        AutomationProperties.Name="Restore selected window placement"/>
+            </WrapPanel>
+        </Grid>
+
+        <ListBox x:Name="WindowList"
+                 Grid.Row="1"
+                 ItemsSource="{Binding Windows}"
+                 SelectedIndex="{Binding SelectedIndex, Mode=TwoWay}"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 VirtualizingPanel.IsVirtualizing="False"
+                 AutomationProperties.Name="Application windows">
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel HorizontalAlignment="Center"/>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+        </ListBox>
+
+        <Grid Grid.Row="2" Margin="7,13,7,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding Status}"
+                       Foreground="{DynamicResource SecondaryTextBrush}"
+                       VerticalAlignment="Center"
+                       AutomationProperties.LiveSetting="Polite"
+                       AutomationProperties.Name="Overview status"/>
+            <TextBlock Grid.Column="1"
+                       Text="Arrows navigate - Shift+Left/Right moves display - Enter opens - Esc dismisses"
+                       Foreground="{DynamicResource MutedTextBrush}"
+                       VerticalAlignment="Center"/>
+        </Grid>
+    </Grid>
+</Window>

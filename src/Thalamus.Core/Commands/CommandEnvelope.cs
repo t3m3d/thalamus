@@ -6,18 +6,33 @@ public sealed record CommandEnvelope(int Version, AppCommand Command)
 {
     public const int CurrentVersion = 1;
 
-    public static CommandEnvelope Create(AppCommand command) => new(CurrentVersion, command);
+    public static CommandEnvelope Create(AppCommand command)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        return new(CurrentVersion, command);
+    }
 
     public string Serialize() => JsonSerializer.Serialize(this);
 
-    public static CommandEnvelope? Deserialize(string json)
+    public static CommandEnvelope? Deserialize(string? json)
     {
+        if (string.IsNullOrWhiteSpace(json))
+            return null;
+
         try
         {
             var value = JsonSerializer.Deserialize<CommandEnvelope>(json);
-            return value?.Version == CurrentVersion ? value : null;
+            if (value is not { Version: CurrentVersion, Command: not null })
+                return null;
+
+            var parsed = CommandParser.Parse(CommandParser.ToArguments(value.Command));
+            return parsed.Success && parsed.Command == value.Command ? value : null;
         }
         catch (JsonException)
+        {
+            return null;
+        }
+        catch (ArgumentException)
         {
             return null;
         }

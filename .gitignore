@@ -84,6 +84,8 @@ BenchmarkDotNet.Artifacts/
 
 # .NET Core
 project.lock.json
+.appdata/
+.packages/
 project.fragment.lock.json
 artifacts/
 .artifacts/
