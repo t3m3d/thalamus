@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Thalamus.Core/Thalamus.Core.csproj" />
+    <Project Path="src/Thalamus/Thalamus.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Thalamus.Tests/Thalamus.Tests.csproj" />
+  </Folder>
+</Solution>
